@@ -4,8 +4,8 @@
 """
 des: merges several HDF5 files into a single file or multiple larger files.
 example
-    merge.py ifiles_*.h5 -o ofile.h5
-    merge.py ifiles_*.h5 -o ofile.h5 -m 5 -n 5
+    merge_files.py path/to/ifiles_*.h5 -o path/to/ofile.h5
+    merge_files.py path/to/ifiles_*.h5 -o path/to/ofile.h5 -m 5 -n 5
 notes
     - The parallel option (-n) only works for multiple outputs (-m)!
     - If no 'key' is given, it merges files in the order they are passed/read.
@@ -29,11 +29,11 @@ def get_args():
     parser = argparse.ArgumentParser(
             description='Merges several HDF5 files.')
     parser.add_argument(
-            'file', metavar='file', type=str, nargs='+',
-            help='HDF5 files to merge')
+            'ifile', metavar='ifile', type=str, nargs='+',
+            help='HDF5 file paths to merge')
     parser.add_argument(
             '-o', metavar='ofile', dest='ofile', type=str, nargs=1,
-            help=('output file name'),
+            help=('output file path'),
             default=[None], required=True,)
     parser.add_argument(
             '-m', metavar='nfiles', dest='nfiles', type=int, nargs=1,
@@ -71,7 +71,6 @@ def get_total_len(ifiles):
             N += list(f.values())[0].shape[0]
     return N
 
-
 def get_var_names(ifile):
     """ des: return all '/variable' names in the HDF5. 
         arg: 
@@ -84,7 +83,6 @@ def get_var_names(ifile):
     with h5py.File(ifile, 'r') as f:
         vnames = list(f.keys())
     return vnames
-
 
 def get_multi_io(ifiles, ofile, nfiles):
     """ des: Construct multiple input/output file names in the data merging. 
@@ -159,8 +157,8 @@ def merge(ifiles, ofile, vnames, comp):
 
 if __name__ == '__main__':
 
-    args = get_args() 
-    ifile = args.file[:]       # list
+    args = get_args()
+    ifile = args.ifile[:]       # list
     ofile = args.ofile[0]      # str
     nfiles = args.nfiles[0]
     vnames = args.vnames
@@ -168,6 +166,7 @@ if __name__ == '__main__':
     key = args.key[0]
     njobs = args.njobs[0]
 
+    if os.path.exists(ofile): os.remove(ofile)
     # In case a string is passed to avoid "argument list too long"
     if len(ifile) == 1:
         ifile = glob(ifile[0])

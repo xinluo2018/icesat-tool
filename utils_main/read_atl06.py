@@ -1,6 +1,6 @@
 # author: Fernando Paolo, 
 # modify: xin luo, 2021.8.10.   
-# des: read in and write out reorganized atl06 data
+# des: read in and write out re-organized atl06 data
 
 '''
 des: 1. read and split icesat2 alt06 data by beams.
@@ -14,6 +14,7 @@ import os
 import h5py
 import numpy as np
 import argparse
+from joblib import Parallel, delayed
 from astropy.time import Time
 
 def gps2dyr(time):
@@ -80,7 +81,7 @@ def read_atl06(file_in, dir_out):
     '''
 
     # Create dictionary for saving output variables
-    out_keys = ['h_lon', 'h_lat', 'h_li', 't_dyr', 'cycle', 'rgt', \
+    out_keys = ['lon', 'lat', 'h', 't_dyr', 'cycle', 'rgt', \
                 'beam_type', 'spot', 'orbit_type']   ## output variables
     d, d_update = {}, {}      
     for key in out_keys: 
@@ -96,15 +97,15 @@ def read_atl06(file_in, dir_out):
         with h5py.File(file_in, "r") as fi:
             try:
                 ## group varibales:
-                d['h_lat'] = fi[group[k] + "/land_ice_segments/latitude"][:]
-                d['h_lon'] = fi[group[k] + "/land_ice_segments/longitude"][:]
-                d['h_li'] = fi[group[k] + "/land_ice_segments/h_li"][:]
+                d['lat'] = fi[group[k] + "/land_ice_segments/latitude"][:]
+                d['lon'] = fi[group[k] + "/land_ice_segments/longitude"][:]
+                d['h'] = fi[group[k] + "/land_ice_segments/h_li"][:]
                 d['t_dt'] = fi[group[k] + "/land_ice_segments/delta_time"][:]
                 d['quality'] = fi[group[k] + "/land_ice_segments/atl06_quality_summary"][:]
                 ## dset varibales
                 d['tref'] = fi["/ancillary_data/atlas_sdp_gps_epoch"][:] 
-                d['cycle'] = fi["/orbit_info/cycle_number"][:] * np.ones(len(d['h_lat']))
-                d['rgt'] = fi["/orbit_info/rgt"][:] * np.ones(len(d['h_lat']))
+                d['cycle'] = fi["/orbit_info/cycle_number"][:] * np.ones(len(d['lat']))
+                d['rgt'] = fi["/orbit_info/rgt"][:] * np.ones(len(d['lat']))
                 ## group attributes
                 beam_type = fi[group[k]].attrs["atlas_beam_type"].decode()
                 spot_number = fi[group[k]].attrs["atlas_spot_number"].decode()   # 
@@ -115,26 +116,26 @@ def read_atl06(file_in, dir_out):
 
         ## set beam type: 1 -> strong, 0 -> weak
         if beam_type == "strong": 
-            d['beam_type'] = np.ones(d['h_lat'].shape)
+            d['beam_type'] = np.ones(d['lat'].shape)
         else:
-            d['beam_type'] = np.zeros(d['h_lat'].shape)
+            d['beam_type'] = np.zeros(d['lat'].shape)
 
         #----------------------------------------------------#
-        # 3) obtain orbit orientation with time: 
+        # 2) obtain orbit orientation with time: 
         #    ascending -> 1, descending -> 0                 #
         #----------------------------------------------------#
         ### --- creating array of spot numbers
-        d['spot'] = float(spot_number) * np.ones(d['h_lat'].shape)
+        d['spot'] = float(spot_number) * np.ones(d['lat'].shape)
         t_gps = d['t_dt'] + d['tref']
         d['t_dyr'] = gps2dyr(t_gps)      # time in decimal years
         ### --- obtain orbit orientation type
-        (i_asc, i_des) = orbit_type(d['t_dyr'], d['h_lat'])   # track type (asc/des)        
-        d['orbit_type'] = np.empty_like(d['h_lat'], dtype=int)
+        (i_asc, i_des) = orbit_type(d['t_dyr'], d['lat'])   # track type (asc/des)        
+        d['orbit_type'] = np.empty_like(d['lat'], dtype=int)
         d['orbit_type'][i_asc] = 1     # ascending
         d['orbit_type'][i_des] = 0     # descending
 
         #----------------------------------------------------#
-        # 4) selected valid data, and update the variables   #
+        # 3) selected valid data, and update the variables   #
         #----------------------------------------------------#
         ### ---- Update the variables in dictionary
         good = d['quality']==0
@@ -143,7 +144,7 @@ def read_atl06(file_in, dir_out):
             d_update[key] = np.append(d_update[key], d[key])
 
     #------------------------------------------#
-    # 5) Writting out the selected data        #
+    # 4) Writting out the selected data        #
     #------------------------------------------#
     name, ext = os.path.splitext(os.path.basename(file_in))
     file_out = os.path.join(dir_out, name + "_" + "readout" + ext)
@@ -167,6 +168,5 @@ if __name__ == '__main__':
         [read_atl06(f, dir_out) for f in ifiles]
     else:
         print(("running in parallel (%d jobs) ..." % njobs))
-        from joblib import Parallel, delayed
         Parallel(n_jobs=njobs, verbose=5)(
                 delayed(read_atl06)(f, dir_out) for f in ifiles)

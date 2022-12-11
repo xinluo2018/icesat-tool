@@ -83,7 +83,7 @@ def read_atl03(file_in, dir_out):
     '''
 
     # Create dictionary for saving output variables
-    out_keys = ['h_lon', 'h_lat', 'h_li', 't_dyr', 'cycle', 'rgt', \
+    out_keys = ['lon', 'lat', 'h', 't_dyr', 'cycle', 'rgt', \
                         'beam_type', 'spot', 'orbit_type']   ## output variables
     d, d_update = {}, {}      
     for key in out_keys: 
@@ -99,14 +99,14 @@ def read_atl03(file_in, dir_out):
         with h5py.File(file_in, "r") as fi:
             try:
                 ## group varibales:
-                d['h_lat'] = fi[group[k] + "/heights/lat_ph"][:]
-                d['h_lon'] = fi[group[k] + "/heights/lon_ph"][:]
-                d['h_li'] = fi[group[k] + "/heights/h_ph"][:]
+                d['lat'] = fi[group[k] + "/heights/lat_ph"][:]
+                d['lon'] = fi[group[k] + "/heights/lon_ph"][:]
+                d['h'] = fi[group[k] + "/heights/h_ph"][:]
                 d['t_dt'] = fi[group[k] + "/heights/delta_time"][:]
                 ## dset varibales
                 d['tref'] = fi["/ancillary_data/atlas_sdp_gps_epoch"][:]
-                d['cycle'] = fi["/orbit_info/cycle_number"][:] * np.ones(len(d['h_lat'])).astype(np.int8)
-                d['rgt'] = fi["/orbit_info/rgt"][:] * np.ones(len(d['h_lat'])).astype(np.int32)
+                d['cycle'] = fi["/orbit_info/cycle_number"][:] * np.ones(len(d['lat'])).astype(np.int8)
+                d['rgt'] = fi["/orbit_info/rgt"][:] * np.ones(len(d['lat'])).astype(np.int32)
                 d['signal_conf_ph'] = fi[group[k] + "/heights/signal_conf_ph"][:]
                 ## group attributes
                 beam_type = fi[group[k]].attrs["atlas_beam_type"].decode()
@@ -118,21 +118,21 @@ def read_atl03(file_in, dir_out):
 
         ## set beam type: 1 -> strong, 0 -> weak
         if beam_type == "strong":
-            d['beam_type'] = np.ones(d['h_lat'].shape).astype(np.int8)
+            d['beam_type'] = np.ones(d['lat'].shape).astype(np.int8)
         else:
-            d['beam_type'] = np.zeros(d['h_lat'].shape).astype(np.int8)
+            d['beam_type'] = np.zeros(d['lat'].shape).astype(np.int8)
 
         #----------------------------------------------------#
         # 3) obtain orbit orientation with time: 
         #    ascending -> 1, descending -> 0                 #
         #----------------------------------------------------#
         ### --- creating array of spot numbers
-        d['spot'] = float(spot_number) * np.ones(d['h_lat'].shape).astype(np.int8)
+        d['spot'] = float(spot_number) * np.ones(d['lat'].shape).astype(np.int8)
         t_gps = d['t_dt'] + d['tref']
         d['t_dyr'] = gps2dyr(t_gps)       #  time in decimal years
         ### --- obtain orbit type
-        (i_asc, i_des) = orbit_type(d['t_dyr'], d['h_lat'])    #  track type (asc/des)        
-        d['orbit_type'] = np.empty_like(d['h_lat'], dtype=int)
+        (i_asc, i_des) = orbit_type(d['t_dyr'], d['lat'])    #  track type (asc/des)        
+        d['orbit_type'] = np.empty_like(d['lat'], dtype=int)
         d['orbit_type'][i_asc] = 1     # ascending
         d['orbit_type'][i_des] = 0     # descending
 

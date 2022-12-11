@@ -3,17 +3,6 @@
 ## des: find and compute crossover values for the icesat2 data. 
 ## note: !!Due to icesat2 have 6 beams, this script is not suitable for another altimetry data.
 
-"""
-notes:
-    For external tile processing please use "tile.py" with the same extent 
-    for the A and D files. This as the program uses the tile numbering to 
-    determine which of the tiles should be crossed together.
-    
-    When running in external tile-mode the saved file with crossovers
-    will be appended with "_XOVERS_AD/DA". Please use "_A" or "_D" in the
-    filename to indicate As or Des tracks when running in tile mode. 
-"""
-
 import numpy as np
 import pyproj
 import pandas as pd

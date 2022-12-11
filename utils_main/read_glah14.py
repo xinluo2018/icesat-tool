@@ -46,7 +46,6 @@ def orbit_type(time, lat):
     # Output index vector's
     return i_asc, np.invert(i_asc)
     
-
 def get_args():
     description = "read ICESat-2 ATL06 data files by groud track and orbit."
     parser = argparse.ArgumentParser(description=description)
@@ -62,7 +61,6 @@ def get_args():
             help="number of cores to use for parallel processing", 
             default=[1])
     return parser.parse_args()
-
 
 def read_glah14(file_in, dir_out):
     ''' 
@@ -82,10 +80,10 @@ def read_glah14(file_in, dir_out):
     #------------------------------------------#
     with h5py.File(file_in, 'r') as f_gla14:
 
-        d['h_lat'] = f_gla14['Data_40HZ/Geolocation/d_lat'][:]
-        d['h_lon'] = f_gla14['Data_40HZ/Geolocation/d_lon'][:]
+        d['lat'] = f_gla14['Data_40HZ/Geolocation/d_lat'][:]
+        d['lon'] = f_gla14['Data_40HZ/Geolocation/d_lon'][:]
         d['t_utc'] = f_gla14['Data_40HZ/Time/d_UTCTime_40'][:]  # secs since 2000-01-01 12:00:00 UTC
-        d['h_cor'] = f_gla14['Data_40HZ/Elevation_Surfaces/d_elev'][:] 
+        d['h'] = f_gla14['Data_40HZ/Elevation_Surfaces/d_elev'][:] 
         d['h_flg'] = f_gla14['Data_40HZ/Quality/elev_use_flg'][:]
         d['sat_flg'] = f_gla14['Data_40HZ/Quality/sat_corr_flg'][:]
         d['att_flg'] = f_gla14['Data_40HZ/Quality/sigma_att_flg'][:]
@@ -95,7 +93,7 @@ def read_glah14(file_in, dir_out):
         d['h_tide'] = f_gla14['Data_40HZ/Geophysical/d_ocElv'][:]  # ocean tide [m]
         d['h_load'] = f_gla14['Data_40HZ/Geophysical/d_ldElv'][:]  # load tide [m]  
         track_01Hz = f_gla14['Data_1HZ/Geolocation/i_track'][:]   # 1Hz Track 
-        d['h_track'] = track_01Hz.repeat(40)  # Get 40 Hz tracks
+        d['track'] = track_01Hz.repeat(40)  # Get 40 Hz tracks
 
         d['t_dyr'] = utc2dyr(d['t_utc'])
 
@@ -104,10 +102,10 @@ def read_glah14(file_in, dir_out):
         #------------------------------------------------------------#
 
         idx, = np.where(
-            (np.abs(d['h_cor']) < 1e10) &
+            (np.abs(d['h']) < 1e10) &
             (np.abs(d['h_sat']) < 1e10) &
-            (np.abs(d['h_lat']) <= 90) &
-            (np.abs(d['h_lon']) <= 3600) &
+            (np.abs(d['lat']) <= 90) &
+            (np.abs(d['lon']) <= 3600) &
             (d['h_flg'] == 0) &
             (d['sat_flg'] <= 2) &
             (d['att_flg'] == 0) &
@@ -123,24 +121,24 @@ def read_glah14(file_in, dir_out):
             d[k] = d[k][idx]
 
         ## Corrections
-        d['h_cor'] += d['h_tide'] + d['h_load']  # apply tides cor
-        d['h_cor'] += d['h_sat']      # Apply saturation cor
-        d['h_cor'] -= d['h_ellip']    # Convert ellipsoid: h_TP -> h_WGS84
+        d['h'] += d['h_tide'] + d['h_load']  # apply tides cor
+        d['h'] += d['h_sat']      # Apply saturation cor
+        d['h'] -= d['h_ellip']    # Convert ellipsoid: h_TP -> h_WGS84
 
 
         #------------------------------------------#
         # 3) add orbit type         #
         #------------------------------------------#
         name, ext = os.path.splitext(os.path.basename(file_in))
-        (i_asc, i_des) = orbit_type(d['t_dyr'], d['h_lat'])
-        d['h_orbit'] = np.empty_like(d['h_lat'], dtype=int)
-        d['h_orbit'][i_asc] = 1  # 1 -> ascending
-        d['h_orbit'][i_des] = 0  # 0 -> descending
+        (i_asc, i_des) = orbit_type(d['t_dyr'], d['lat'])
+        d['orbit'] = np.empty_like(d['lat'], dtype=int)
+        d['orbit'][i_asc] = 1  # 1 -> ascending
+        d['orbit'][i_des] = 0  # 0 -> descending
 
         #------------------------------------------#
         # 4) Writting out the selected data        #
         #------------------------------------------#
-        out_keys = ['h_lon', 'h_lat', 'h_cor', 't_dyr', 'h_track', 'h_orbit']   ## output variables
+        out_keys = ['lon', 'lat', 'h', 't_dyr', 'track', 'orbit']   ## output variables
         file_out = os.path.join(dir_out, name + '_readout' + ext)
         with h5py.File(file_out, "w") as f_out:
             [f_out.create_dataset(key, data=d[key]) for key in out_keys]

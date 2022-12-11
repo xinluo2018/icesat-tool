@@ -1,22 +1,10 @@
 # icesat2
 Scripts for icesat2 data processing
 
-## structure
-_utils and utils_main are functional api and comman line api, respectively._
-- data access:   
-  data_acess.ipynb  
-- data reading and write out:   
-  readatl03.py; readatl06.py    
-- data organization:   
-  split_file.py  
-  merge_files.py; subset_file.py  
-- preprocessing:   
-  tile_match.py; make_grid.py   
-- processing:   
-  interp.py; xover.py 
 
 
 ### to do
+- 
 
 ### Acknowledgement
 Many thanks to following codes that help us a lot in building this codebase:    

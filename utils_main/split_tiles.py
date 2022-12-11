@@ -2,8 +2,8 @@
 ## improve: xin luo, 2022.10.6
 ## split file into multiple tiles by given meter or degree. if by meter, the coordinates should projected.
 ##    if by degreen ,the coordinates should be wgs84 (epsg:4326)
-## usage: python split_tiles.py pineisland_ATL06_201901.h5 -d 15000 15000 -c h_lon h_lat -p 3031 -n 4
-##     or python split_tiles.py pineisland_ATL06_201901.h5 -d 0.15 0.15 -c h_lon h_lat -p 4326 -n 4
+## usage: python split_tiles.py pineisland_ATL06_201901.h5 -d 15000 15000 -c lon lat -p 3031 -n 4
+##     or python split_tiles.py pineisland_ATL06_201901.h5 -d 0.15 0.15 -c lon lat -p 4326 -n 4
 
 """
 des: split the very-large files into multiple tiles by distance (km)/degree.
