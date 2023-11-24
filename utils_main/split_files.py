@@ -9,7 +9,7 @@ example:
     python split_file.py file.h5 -k 16
 To see available options:
     python split_file.py -h
-Also see complementary program: 'merge.py'
+Also see complementary program: 'merge_files.py'
 '''
 
 import os

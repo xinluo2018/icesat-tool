@@ -35,11 +35,14 @@ def get_args():
         default=[1])
     return parser.parse_args()
 
-def gps2dyr(time):
-    """ Converte from GPS time to decimal years. """
-    time = Time(time, format="gps")
-    time = Time(time, format="decimalyear").value
-    return time
+def gps2dyr(gps_seconds):
+    """ Convert from GPS seconds to decimal years. 
+    args:
+        gps_seconds: seconds start with reference gps time.
+    """
+    time_gps = Time(gps_seconds, format="gps")
+    time_dyr = Time(time_gps, format="decimalyear").value
+    return time_dyr
 
 def orbit_type(time, lat):
     """

@@ -17,9 +17,13 @@ import argparse
 from joblib import Parallel, delayed
 from astropy.time import Time
 
-def gps2dyr(time):
-    """ Converte from GPS time to decimal years. """
-    time_gps = Time(time, format="gps")
+
+def gps2dyr(gps_seconds):
+    """ Convert from GPS seconds to decimal years. 
+    args:
+        gps_seconds: seconds start with reference gps time.
+    """
+    time_gps = Time(gps_seconds, format="gps")
     time_dyr = Time(time_gps, format="decimalyear").value
     return time_dyr
 

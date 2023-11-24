@@ -139,7 +139,7 @@ def read_glah14(file_in, dir_out):
         # 4) Writting out the selected data        #
         #------------------------------------------#
         out_keys = ['lon', 'lat', 'h', 't_dyr', 'track', 'orbit']   ## output variables
-        file_out = os.path.join(dir_out, name + '_readout' + ext)
+        file_out = os.path.join(dir_out, name + '_readout' + '.h5')   ## note: change the extention name .H5 to .h5.
         with h5py.File(file_out, "w") as f_out:
             [f_out.create_dataset(key, data=d[key]) for key in out_keys]
         print('written file:', (file_out))
